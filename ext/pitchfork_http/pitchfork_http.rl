@@ -330,19 +330,8 @@ static void write_value(VALUE self, struct http_parser *hp,
   }
   action host { rb_hash_aset(hp->env, g_http_host, STR_NEW(mark, fpc)); }
   action request_uri {
-    VALUE str;
-
     VALIDATE_MAX_URI_LENGTH(LEN(mark, fpc), REQUEST_URI);
-    str = rb_hash_aset(hp->env, g_request_uri, STR_NEW(mark, fpc));
-    /*
-     * "OPTIONS * HTTP/1.1\r\n" is a valid request, but we can't have '*'
-     * in REQUEST_PATH or PATH_INFO or else Rack::Lint will complain
-     */
-    if (STR_CSTR_EQ(str, "*")) {
-      str = rb_str_new(NULL, 0);
-      rb_hash_aset(hp->env, g_path_info, str);
-      rb_hash_aset(hp->env, g_request_path, str);
-    }
+    rb_hash_aset(hp->env, g_request_uri, STR_NEW(mark, fpc));
   }
   action fragment {
     VALIDATE_MAX_URI_LENGTH(LEN(mark, fpc), FRAGMENT);
@@ -359,10 +348,7 @@ static void write_value(VALUE self, struct http_parser *hp,
 
     VALIDATE_MAX_URI_LENGTH(LEN(mark, fpc), REQUEST_PATH);
     val = rb_hash_aset(hp->env, g_request_path, STR_NEW(mark, fpc));
-
-    /* rack says PATH_INFO must start with "/" or be empty */
-    if (!STR_CSTR_EQ(val, "*"))
-      rb_hash_aset(hp->env, g_path_info, val);
+    rb_hash_aset(hp->env, g_path_info, val);
   }
   action add_to_chunk_size {
     hp->len.chunk = step_incr(hp->len.chunk, fc, 16);
