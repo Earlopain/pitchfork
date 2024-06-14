@@ -54,8 +54,10 @@ module Pitchfork
               "Date: #{httpdate}\r\n" \
               "Connection: close\r\n".b
         headers.each do |key, value|
-          case key
-          when %r{\A(?:Date|Connection)\z}i
+          # Rack 3 requires headers to be downcased already, this can be simplified
+          # when support for Rack 2 is dropped
+          case key.downcase
+          when "date", "connection"
             next
           when "rack.hijack"
             # This should only be hit under Rack >= 1.5, as this was an illegal
